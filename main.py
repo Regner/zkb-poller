@@ -1,10 +1,14 @@
 
 
+import os
 import json
+import asyncio
+import aiohttp
 import logging
-import requests
 
-from gcloud import pubsub
+from nats.aio.client import Client
+from nats.aio.errors import ErrConnectionClosed, ErrTimeout, ErrNoServers
+
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -12,28 +16,29 @@ logger.setLevel(logging.INFO)
 
 # App Settings
 ZKILLBOARD_REDISQ = 'http://redisq.zkillboard.com/listen.php'
+NATS_SERVERS = os.environ.get('NATS_SERVERS', 'nats://127.0.0.1:4222')
 
-# PubSub Settings
-PS_CLIENT = pubsub.Client()
-PS_TOPIC = PS_CLIENT.topic('zkillboard.raw')
 
-if not PS_TOPIC.exists():
-    PS_TOPIC.create()
+async def fetch_page(session, url):
+    with aiohttp.Timeout(12):
+        async with session.get(url) as response:
+            assert response.status == 200
+            return await response.read()
 
-while True:
-    response = requests.get(ZKILLBOARD_REDISQ)
-    
-    if response.status_code == requests.codes.ok:
-        data = response.json()
-        
-        if data['package'] is not None:
-            killmail = data['package']
-            logger.info('Got new killmail with ID {}'.format(killmail['killID']))
 
-            PS_TOPIC.publish(json.dumps(killmail))
-        
-        else:
-            logger.info('No new killmail.')
-    
-    else:
-        logger.error('Problem with zKB response. Got code {}.'.format(response.status_code))
+async def run(loop):
+  client = Client()
+  servers = NATS_SERVERS.split(',')
+
+  await client.connect(io_loop=loop, servers=servers)
+
+  while True:
+      with aiohttp.ClientSession(loop=loop) as session:
+        content = loop.run_until_complete(fetch_page(session, ZKILLBOARD_REDISQ))
+        logger.info(content)
+
+
+if __name__ == '__main__':
+  loop = asyncio.get_event_loop()
+  loop.run_until_complete(run(loop))
+  loop.close()

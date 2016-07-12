@@ -1,6 +1,6 @@
 
 
-FROM debian:latest
+FROM python:3.5.2-alpine
 MAINTAINER Regner Blok-Andersen <shadowdf@gmail.com>
 
 ADD main.py /app/
