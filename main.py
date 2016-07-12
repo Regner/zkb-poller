@@ -27,9 +27,9 @@ async def run(loop):
 
   while True:
     with aiohttp.ClientSession() as session:
-    async with session.get(ZKILLBOARD_REDISQ) as resp:
-        print(resp.status)
-        print(await resp.text())
+        async with session.get(ZKILLBOARD_REDISQ) as resp:
+            print(resp.status)
+            print(await resp.text())
 
 
 if __name__ == '__main__':
