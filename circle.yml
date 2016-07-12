@@ -6,6 +6,7 @@ dependencies:
   override:
     - docker info
     - docker build -t regner/zkb-poller:$CIRCLE_SHA1 .
+    - docker tag -f regner/zkb-poller:$CIRCLE_SHA1 regner/zkb-poller:latest
 
 test:
   override:
@@ -17,3 +18,4 @@ deployment:
     commands:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push regner/zkb-poller:$CIRCLE_SHA1
+      - docker push regner/zkb-poller:latest
