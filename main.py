@@ -24,12 +24,13 @@ while True:
     response = requests.get(ZKILLBOARD_REDISQ)
     
     if response.status_code == requests.codes.ok:
-        killmail = response.json()
+        data = response.json()
         
-        if killmail['package'] is not None:
-            logger.info('Got new killmail with ID {}'.format(killmail['package']['killID']))
+        if data['package'] is not None:
+            killmail = data['package']
+            logger.info('Got new killmail with ID {}'.format(killmail['killID']))
 
-            PS_TOPIC.publish(json.dumps(killmail['package']))
+            PS_TOPIC.publish(json.dumps(killmail))
         
         else:
             logger.info('No new killmail.')
