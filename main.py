@@ -19,13 +19,6 @@ ZKILLBOARD_REDISQ = 'http://redisq.zkillboard.com/listen.php'
 NATS_SERVERS = os.environ.get('NATS_SERVERS', 'nats://127.0.0.1:4222')
 
 
-async def fetch_page(session, url):
-    with aiohttp.Timeout(12):
-        async with session.get(url) as response:
-            assert response.status == 200
-            return await response.read()
-
-
 async def run(loop):
   client = Client()
   servers = NATS_SERVERS.split(',')
@@ -33,9 +26,10 @@ async def run(loop):
   await client.connect(io_loop=loop, servers=servers)
 
   while True:
-      with aiohttp.ClientSession(loop=loop) as session:
-        content = loop.run_until_complete(fetch_page(session, ZKILLBOARD_REDISQ))
-        logger.info(content)
+    with aiohttp.ClientSession() as session:
+    async with session.get(ZKILLBOARD_REDISQ) as resp:
+        print(resp.status)
+        print(await resp.text())
 
 
 if __name__ == '__main__':
