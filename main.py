@@ -17,6 +17,8 @@ logger.setLevel(logging.INFO)
 # App Settings
 ZKILLBOARD_REDISQ = 'http://redisq.zkillboard.com/listen.php'
 NATS_SERVERS = os.environ.get('NATS_SERVERS', 'nats://127.0.0.1:4222')
+# NATS_SERVERS = os.environ.get('NATS_SERVERS', 'nats://192.168.99.100:31356')
+
 
 
 async def run(loop):
@@ -34,7 +36,9 @@ async def run(loop):
             killmail = data['package']
 
             logger.info('Publishing killmail with ID {}'.format(killmail['killID']))
-            client.publish('zkillboard.raw', str.encode(json.dumps(killmail)))
+
+            await client.publish('zkillboard.raw', str.encode(json.dumps(killmail)))
+
 
 
 if __name__ == '__main__':
