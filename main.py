@@ -33,6 +33,7 @@ async def run(loop):
         if data['package'] is not None:
             killmail = data['package']
 
+            logger.info('Publishing killmail with ID {}'.format(killmail['killID']))
             client.publish('zkillboard.raw', killmail)
 
 
