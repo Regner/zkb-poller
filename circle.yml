@@ -1,12 +1,14 @@
 machine:
   services:
     - docker
+  environment:
+    CONTAINER_NAME: "zkb-poller"
 
 dependencies:
   override:
     - docker info
-    - docker build -t regner/zkb-poller:$CIRCLE_SHA1 .
-    - docker tag -f regner/zkb-poller:$CIRCLE_SHA1 regner/zkb-poller:latest
+    - docker build -t regner/$CONTAINER_NAME:$CIRCLE_SHA1 .
+    - docker tag -f regner/$CONTAINER_NAME:$CIRCLE_SHA1 regner/$CONTAINER_NAME:latest
 
 test:
   override:
@@ -17,5 +19,5 @@ deployment:
     branch: master
     commands:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push regner/zkb-poller:$CIRCLE_SHA1
-      - docker push regner/zkb-poller:latest
+      - docker push regner/$CONTAINER_NAME:$CIRCLE_SHA1
+      - docker push regner/$CONTAINER_NAME:latest
