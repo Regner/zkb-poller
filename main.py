@@ -34,7 +34,7 @@ async def run(loop):
             killmail = data['package']
 
             logger.info('Publishing killmail with ID {}'.format(killmail['killID']))
-            client.publish('zkillboard.raw', killmail)
+            client.publish('zkillboard.raw', str.encode(json.dumps(killmail)))
 
 
 if __name__ == '__main__':
