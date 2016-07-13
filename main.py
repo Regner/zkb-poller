@@ -28,12 +28,12 @@ async def run(loop):
   while True:
     with aiohttp.ClientSession() as session:
         async with session.get(ZKILLBOARD_REDISQ) as resp:
-            data = resp.json()
+            data = await resp.json()
 
-            if data['package'] is not None:
-                killmail = data['package']
+        if data['package'] is not None:
+            killmail = data['package']
 
-                client.publish('zkillboard.raw', killmail)
+            client.publish('zkillboard.raw', killmail)
 
 
 if __name__ == '__main__':
