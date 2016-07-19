@@ -1,2 +1,2 @@
-aiohttp==0.21.6
-asyncio-nats-client==0.3.0
+pika==0.10.0
+requests==2.10.0

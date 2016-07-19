@@ -2,12 +2,9 @@
 
 import os
 import json
-import asyncio
-import aiohttp
+import pika
 import logging
-
-from nats.aio.client import Client
-from nats.aio.errors import ErrConnectionClosed, ErrTimeout, ErrNoServers
+import requests
 
 
 logging.basicConfig()
@@ -16,29 +13,37 @@ logger.setLevel(logging.INFO)
 
 # App Settings
 ZKILLBOARD_REDISQ = 'http://redisq.zkillboard.com/listen.php'
-NATS_SERVERS = os.environ.get('NATS_SERVERS', 'nats://127.0.0.1:4222')
+RABBITMQ_SERVER = os.environ.get('RABBITMQ_SERVER', 'rabbitmq-alpha')
 
+# RabbitMQ Setup
+connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_SERVER))
+channel = connection.channel()
 
-async def run(loop):
-    client = Client()
-    servers = NATS_SERVERS.split(',')
+channel.exchange_declare(exchange='regner', type='topic')
+logger.info('Connected to RabbitMQ server...')
 
-    await client.connect(io_loop=loop, servers=servers)
-    logger.info('Connected to NATS server...')
+while True:
+    response = requests.get(ZKILLBOARD_REDISQ)
+    
+    if response.status_code == requests.codes.ok:
+        data = response.json()
+        
+        if data['package'] is not None:
+            killmail = data['package']
 
-    while True:
-        with aiohttp.ClientSession() as session:
-            async with session.get(ZKILLBOARD_REDISQ) as resp:
-                data = await resp.json()
+            logger.info('Publishing new killmail with ID {}.'.format(killmail['killID']))
 
-            if data['package'] is not None:
-                killmail = data['package']
-
-                logger.info('Publishing killmail with ID {}'.format(killmail['killID']))
-
-                await client.publish('zkillboard.raw', str.encode(json.dumps(killmail)))
-
-if __name__ == '__main__':
-  loop = asyncio.get_event_loop()
-  loop.run_until_complete(run(loop))
-  loop.close()
+            channel.basic_publish(
+                exchange='regner',
+                routing_key='zkillboard.raw',
+                body=json.dumps(killmail),
+                properties=pika.BasicProperties(
+                    delivery_mode = 2,
+                ),
+            )
+        
+        else:
+            logger.info('No new killmail.')
+    
+    else:
+        logger.error('Problem with zKB response. Got code {}.'.format(response.status_code))
