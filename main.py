@@ -13,7 +13,7 @@ logger.setLevel(logging.INFO)
 
 # App Settings
 ZKILLBOARD_REDISQ = 'http://redisq.zkillboard.com/listen.php'
-RABBITMQ_SERVER = os.environ.get('RABBITMQ_SERVER', 'rabbitmq-alpha')
+RABBITMQ_SERVER = os.environ.get('RABBITMQ_SERVER', 'rabbitmq')
 
 # RabbitMQ Setup
 connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_SERVER))
